@@ -2,7 +2,7 @@
   "abi_revision": 10,
   "abi_version": 2,
   "artifacts": {
-    "central-bundle.zip": "ada61376ccf09bcc0642bac71cdca82fe2b7cc64c12f0eee5c10ba1d26a7523a"
+    "central-bundle.zip": "6bb8d62d26915757b825e3488b7f8befa9495ae6e02ae3469bc34ada0f695c22"
   },
   "channel": "central",
   "gpg_signed": true,
@@ -10,7 +10,7 @@
   "platform": "android",
   "sdk_version": "0.2.0",
   "source_base_commit": "e09e4070800bcdbfcdb5171d9d2871986f8c57a5",
-  "source_input_sha256": "325c2aa7ab27ca01291b6c21ecd9154172e08f14ecdba286878fb3e81c598ae0",
+  "source_input_sha256": "2d18f26a5a87a7b8416fc16f212b6d7209d357960e893d9b5be072ab434706d4",
   "source_is_worktree_snapshot": true,
-  "version": "0.2.0-preview.2"
+  "version": "0.2.0-preview.3"
 }

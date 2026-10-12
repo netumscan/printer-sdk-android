@@ -1,7 +1,10 @@
 # NETUM Printer SDK for Android
 
 NETUM 打印机 Android SDK 的闭源二进制分发入口。当前版本为开发预览版
-`0.2.0-preview.2`，核心 SDK 0.2.0，C ABI 2/r10。
+`0.2.0-preview.3`，核心 SDK 0.2.0，C ABI 2/r10。
+
+[客户指南](docs/README.md) 覆盖权限、API 生命周期、纸张配置、错误码、兼容诊断、迁移和安全反馈。
+可运行工程见 [Quick Start / Full Demo](https://github.com/netumscan/printer-sdk-samples)。
 
 在应用工程的仓库配置中加入 Maven Central：
 
@@ -15,7 +18,7 @@ dependencyResolutionManagement {
 
 ```kotlin
 dependencies {
-    implementation("com.netumscan:printer-sdk-android:0.2.0-preview.2")
+    implementation("com.netumscan:printer-sdk-android:0.2.0-preview.3")
 }
 ```
 
@@ -45,13 +48,18 @@ try (MobilePrinter printer = MobilePrinter.spp(context, address, profile)) {
 
 上述几何参数只是配置示例，必须按设备和纸张能力填写。应用负责蓝牙权限、
 用户授权和目标设备选择。Android 12+ 连接需要 `BLUETOOTH_CONNECT`，扫描还需要
-`BLUETOOTH_SCAN`；旧版本扫描所需权限取决于应用的 Android 版本和使用方式。
+`BLUETOOTH_SCAN`；SPP 连接会取消系统发现，因此也需要 `BLUETOOTH_SCAN`。
+Android 8–11 BLE 扫描需位置权限和相应系统设置。完整策略见[接入与权限](docs/integration.md)。
 打印任务入队后异步执行；数据发送完成不代表纸张打印完成。连接中断后不会自动续打。
+
+`MobilePrinter.feature(int)` 返回 `FeatureSupport` 的实现、设备支持和证据三字段；
+旧 `implementsFeature(int)` 保持原义。实现非零不证明硬件支持，未知与明确不支持应区分。
+详见 [FeatureSupport](docs/api-lifecycle.md#featuresupport)。
 
 预览版尚未完成全部型号、固件、故障和手机峰值内存验收，不承诺生产稳定性。
 本仓库和 Maven classifier JAR 只含分发文档及许可信息，不含 SDK 实现源码。
 免费商用接入、再分发边界和限制以 [LICENSE](LICENSE) 为准。
 
 发布后，AAR、POM、Gradle module、签名和校验文件由 Maven Central 提供。
-本仓库保存接入文档、许可证及 `releases/v0.2.0-preview.2/` 中的版本化 POM，
-发布标签为 `v0.2.0-preview.2`。
+本仓库保存接入文档、许可证及 `releases/v0.2.0-preview.3/` 中的版本化 POM，
+发布标签为 `v0.2.0-preview.3`。
