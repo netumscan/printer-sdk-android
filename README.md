@@ -1,7 +1,7 @@
 # NETUM Printer SDK for Android
 
 NETUM 打印机 Android SDK 的闭源二进制分发入口。当前版本为开发预览版
-`0.2.0-preview.3`，核心 SDK 0.2.0，C ABI 2/r10。
+`0.2.0-preview.4`，核心 SDK 0.2.0，C ABI 2/r10。
 
 [客户指南](docs/README.md) 覆盖权限、API 生命周期、纸张配置、错误码、兼容诊断、迁移和安全反馈。
 可运行工程见 [Quick Start / Full Demo](https://github.com/netumscan/printer-sdk-samples)。
@@ -18,13 +18,13 @@ dependencyResolutionManagement {
 
 ```kotlin
 dependencies {
-    implementation("com.netumscan:printer-sdk-android:0.2.0-preview.3")
+    implementation("com.netumscan:printer-sdk-android:0.2.0-preview.4")
 }
 ```
 
-要求 Android API 26+；Java 8；支持 `arm64-v8a`、`armeabi-v7a`、`x86_64`。
-AAR 包含 JNI、原生 C 库、`libc++_shared.so` 和必要的 consumer R8 规则。
-与其他原生 SDK 同时集成时，应在应用侧统一选择兼容的 C++ 运行库。
+要求 Android 5.0 / API 21+；Java 8；支持 `arm64-v8a`、`armeabi-v7a`、`x86_64`。
+AAR 包含 JNI、原生 C 库和必要的 consumer R8 规则，内部静态链接 C++ 运行库，
+不包含 `libc++_shared.so`。其他 SDK 所需的共享运行库应保留，无需为本 SDK 配置 `pickFirst`。
 
 最小接入示例（在应用工作线程执行连接与关闭）：
 
@@ -49,7 +49,8 @@ try (MobilePrinter printer = MobilePrinter.spp(context, address, profile)) {
 上述几何参数只是配置示例，必须按设备和纸张能力填写。应用负责蓝牙权限、
 用户授权和目标设备选择。Android 12+ 连接需要 `BLUETOOTH_CONNECT`，扫描还需要
 `BLUETOOTH_SCAN`；SPP 连接会取消系统发现，因此也需要 `BLUETOOTH_SCAN`。
-Android 8–11 BLE 扫描需位置权限和相应系统设置。完整策略见[接入与权限](docs/integration.md)。
+Android 6–11 BLE 扫描需运行时位置权限和相应系统设置；Android 5.x 使用安装时授权的
+旧版蓝牙权限，不请求运行时权限。完整策略见[接入与权限](docs/integration.md)。
 打印任务入队后异步执行；数据发送完成不代表纸张打印完成。连接中断后不会自动续打。
 
 `MobilePrinter.feature(int)` 返回 `FeatureSupport` 的实现、设备支持和证据三字段；
@@ -61,5 +62,5 @@ Android 8–11 BLE 扫描需位置权限和相应系统设置。完整策略见[
 免费商用接入、再分发边界和限制以 [LICENSE](LICENSE) 为准。
 
 发布后，AAR、POM、Gradle module、签名和校验文件由 Maven Central 提供。
-本仓库保存接入文档、许可证及 `releases/v0.2.0-preview.3/` 中的版本化 POM，
-发布标签为 `v0.2.0-preview.3`。
+本仓库保存接入文档、许可证及 `releases/v0.2.0-preview.4/` 中的版本化 POM，
+发布标签为 `v0.2.0-preview.4`。
