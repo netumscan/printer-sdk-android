@@ -1,66 +1,39 @@
 # NETUM Printer SDK for Android
 
-NETUM 打印机 Android SDK 的闭源二进制分发入口。当前版本为开发预览版
-`0.2.0-preview.4`，核心 SDK 0.2.0，C ABI 2/r10。
+`0.3.0-preview.2` 为开发预览，核心 SDK 0.3.0，C ABI 3/r1。
+契约已经冻结；集成时核对精确 Maven Central 版本与运行库身份，文档本身不作为在线发布证明。
 
-[客户指南](docs/README.md) 覆盖权限、API 生命周期、纸张配置、错误码、兼容诊断、迁移和安全反馈。
-可运行工程见 [Quick Start / Full Demo](https://github.com/netumscan/printer-sdk-samples)。
+[客户指南](docs/README.md) 覆盖权限、API 生命周期、设备配置、错误码、兼容诊断和迁移。
+ABI3 不兼容 ABI2；使用新的 Java API 和同一版本 AAR，不能混用旧 native 库。
 
-在应用工程的仓库配置中加入 Maven Central：
+在应用工程中使用已发布的精确版本：
 
 ```kotlin
 dependencyResolutionManagement {
     repositories { google(); mavenCentral() }
 }
-```
-
-在应用模块中添加依赖：
-
-```kotlin
+// Application module:
 dependencies {
-    implementation("com.netumscan:printer-sdk-android:0.2.0-preview.4")
+    implementation("com.netumscan:printer-sdk-android:0.3.0-preview.2")
 }
 ```
 
-要求 Android 5.0 / API 21+；Java 8；支持 `arm64-v8a`、`armeabi-v7a`、`x86_64`。
-AAR 包含 JNI、原生 C 库和必要的 consumer R8 规则，内部静态链接 C++ 运行库，
-不包含 `libc++_shared.so`。其他 SDK 所需的共享运行库应保留，无需为本 SDK 配置 `pickFirst`。
+要求 Android 5.0 / API 21+、Java 8；支持 `arm64-v8a`、`armeabi-v7a`、`x86_64`。
+AAR 提供 25 个 C 导出、23 个 JNI 导出及 consumer R8 规则，静态链接私有 C++ 运行库。
+应用应保留其他依赖所需的共享运行库。
 
-最小接入示例（在应用工作线程执行连接与关闭）：
+应用使用 `PrinterManager` 连接、释放和关闭的 completion overload，
+使用 `MobilePrinter.observeState` 查看连接、工作和队列状态，
+使用 `PrintOperation.onComplete` 接收终态；默认回调派发到主线程。
+每次打印显式传入经硬件确认的 profile，不猜测打印宽度、蓝牙 UUID 或完成协议。
+`PrinterImage` / `PrintJob` 支持复用像素和多图任务；构建后不可变，使用后需关闭调用方句柄。
+`Subscription.close()` 仅注销通知，`PrintOperation.close()` 仅释放访问权；
+取消任务必须调用 `PrintOperation.cancel()`。
 
-```java
-import com.netumscan.printersdk.CpclProfile;
-import com.netumscan.printersdk.MobilePrinter;
-import com.netumscan.printersdk.PrintOperation;
+SPP 使用经典蓝牙 RFCOMM；BLE 需使用设备对应的服务及写特征 UUID。
+权限申请、用户选设备和生命周期由应用管理，详细要求见[接入与权限](docs/integration.md)。
+硬件状态没有已验证协议时显示未知，状态查询返回不支持且不发送猜测指令。
+数据发送完成不证明纸张打印完成；断线后不会自动重连或重放任务。
 
-CpclProfile profile = new CpclProfile(203, 576, 4096, true);
-try (MobilePrinter printer = MobilePrinter.spp(context, address, profile)) {
-    printer.connect(10000);
-    try (PrintOperation operation = printer.submitLabelGray8(
-            gray8, width, height, 1, 0, 0, 0, true, 120000)) {
-        while (!operation.snapshot().terminal()) {
-            Thread.sleep(20);
-        }
-        // operation.close() 释放结果；不会取消已入队的打印。
-    }
-}
-```
-
-上述几何参数只是配置示例，必须按设备和纸张能力填写。应用负责蓝牙权限、
-用户授权和目标设备选择。Android 12+ 连接需要 `BLUETOOTH_CONNECT`，扫描还需要
-`BLUETOOTH_SCAN`；SPP 连接会取消系统发现，因此也需要 `BLUETOOTH_SCAN`。
-Android 6–11 BLE 扫描需运行时位置权限和相应系统设置；Android 5.x 使用安装时授权的
-旧版蓝牙权限，不请求运行时权限。完整策略见[接入与权限](docs/integration.md)。
-打印任务入队后异步执行；数据发送完成不代表纸张打印完成。连接中断后不会自动续打。
-
-`MobilePrinter.feature(int)` 返回 `FeatureSupport` 的实现、设备支持和证据三字段；
-旧 `implementsFeature(int)` 保持原义。实现非零不证明硬件支持，未知与明确不支持应区分。
-详见 [FeatureSupport](docs/api-lifecycle.md#featuresupport)。
-
-预览版尚未完成全部型号、固件、故障和手机峰值内存验收，不承诺生产稳定性。
-本仓库和 Maven classifier JAR 只含分发文档及许可信息，不含 SDK 实现源码。
-免费商用接入、再分发边界和限制以 [LICENSE](LICENSE) 为准。
-
-发布后，AAR、POM、Gradle module、签名和校验文件由 Maven Central 提供。
-本仓库保存接入文档、许可证及 `releases/v0.2.0-preview.4/` 中的版本化 POM，
-发布标签为 `v0.2.0-preview.4`。
+本目录和 Maven classifier JAR 仅含分发文档与许可信息，不含 SDK 实现源码。
+许可范围见 [LICENSE](LICENSE)。预览候选尚未完成全部硬件验收。
