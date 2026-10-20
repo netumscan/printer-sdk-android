@@ -9,7 +9,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.netumscan</groupId>
   <artifactId>printer-sdk-android</artifactId>
-  <version>0.3.0-preview.4</version>
+  <version>0.3.0-preview.5</version>
   <packaging>aar</packaging>
   <name>Printer SDK Android</name>
   <description>Closed-source Android printer SDK for NETUM devices; development preview</description>

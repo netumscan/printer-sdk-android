@@ -1,6 +1,6 @@
 # NETUM Printer SDK for Android
 
-`0.3.0-preview.4` 为开发预览，核心 SDK 0.3.0，C ABI 3/r2。
+`0.3.0-preview.5` 为开发预览，核心 SDK 0.3.0，C ABI 3/r2。
 当前移动 API 通过独立 `PrinterManager` 管理一个连接，输入与结果都是数据对象。
 开发身份不作为在线发布证明；集成时核对精确版本、制品摘要与运行库身份。
 
@@ -14,7 +14,7 @@ dependencyResolutionManagement {
     repositories { google(); mavenCentral() }
 }
 dependencies {
-    implementation("com.netumscan:printer-sdk-android:0.3.0-preview.4")
+    implementation("com.netumscan:printer-sdk-android:0.3.0-preview.5")
 }
 ```
 
