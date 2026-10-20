@@ -1,8 +1,8 @@
 {
-  "abi_revision": 1,
+  "abi_revision": 2,
   "abi_version": 3,
   "artifacts": {
-    "central-bundle.zip": "ea92136ead0a6b30b86ef81bf418ee7405b79e2911a38fe171e51042f44158f1"
+    "central-bundle.zip": "1e3593cc8310493e47533ee02d3917af6201c308f01756e09572966e2938ce8c"
   },
   "channel": "central",
   "contract_status": "candidate",
@@ -15,11 +15,11 @@
     "hardware_verified": false,
     "local_status": "passed",
     "online_runtime_required": true,
-    "policy": "sdk-software-v2",
-    "report_sha256": "adccaa2860e6d789e32645d1e2b69edc5648aba7aab83e82cd01d22c486c05ce"
+    "policy": "sdk-software-v3",
+    "report_sha256": "0e9eed2a2deef5ac75cbb4d273fb73d42aef1ead559b44e7b79cb92350a95662"
   },
-  "source_base_commit": "cb832e2f8034b395f44c25d2b7b6d67537a9f5f4",
-  "source_input_sha256": "a3143b3d0a828e3eacdaa5574f97ac73aa439da9e12fc57883c33160adfa7bfc",
+  "source_base_commit": "7d4dbb05380cebd29e117f9ff11c3f34472764c8",
+  "source_input_sha256": "9c248c2f3be7347a70c6d2c3c6a3db6384a548b9db47c427cf8876fdc266e06b",
   "source_is_worktree_snapshot": true,
-  "version": "0.3.0-preview.2"
+  "version": "0.3.0-preview.4"
 }
