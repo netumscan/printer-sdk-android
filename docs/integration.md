@@ -1,14 +1,15 @@
 # Android/iOS App 接入
 
-[返回指南](README.md) · 适用版本 `0.3.0-preview.5` · native `0.3.0` · ABI `3/r2`
+[返回指南](README.md) · 适用版本 `0.3.0-preview.8` · native `0.3.0` · ABI `3/r2`
 
 Android 最低 API 21、Java 8；iOS 最低 iOS 15。当前未发布开发版使用本地 SDK 工程或本地制品，
 不要用线上旧版本替代。只有对应版本实际发布后，才可使用精确 Maven 坐标或 SwiftPM exact version；
 SDK 的分发身份、校验和与运行库身份必须相符。
 
 App 负责权限、选择设备及必要的配对；iOS 配置 `NSBluetoothAlwaysUsageDescription`。
-BLE 服务、特征、流控和打印 Profile 必须来自已确认配置，不从设备名推断。
-连接只建立通信，每次打印另外提供协议、DPI、宽度与纸张参数。
+Android 可由 SDK 按扫描得到的标准名称匹配 BLE 参数和打印 Profile；未知 BLE 名称仍需明确通信配置。
+名称匹配不构成硬件认证，纸型与标签尺寸由 App 按实际耗材选择。
+iOS 保持显式 BLE 参数及逐次操作 Profile，不采用 Android 的连接默认 Profile。
 
 以下代码直接取自持续编译检查的 `LabelSession.java` 和 `AppPrinter.swift`。
 Android 与当前 SDK 按 Java 8 编译，iOS 与新编译的 SDK module 按 iOS 15、Swift 5/6 类型检查。
@@ -16,11 +17,17 @@ Android 与当前 SDK 按 Java 8 编译，iOS 与新编译的 SDK module 按 iOS
 
 ## Android 会话
 
-将代码保存为 App 源码 `LabelSession.java`，按工程添加 package，由页面或应用所有者持有。
-构造时提供应用 Context、地址、明确 Profile 与 Ui；BleOptions 为 null 选择 SPP，否则选择 BLE。
-连接结果从 `Ui.connection(ManagerResult)` 返回，以 outcome/code 判断成功；意外断连走 `Ui.disconnected`。
-`print(preparation, timeoutMs)` 的 preparation 在 SDK 后台运行，检查取消并返回 `PreparedPrint`，
-终态从 `Ui.completed` 交付，调用方不需要管理 SDK 任务句柄或订阅。
+将代码保存为 App 源码 `LabelSession.java`，按工程添加 package，由业务 owner 持有。
+构造时提供应用 Context、ConnectionOptions、连接超时与 Ui；`spp(device)` 或 `ble(device)`
+保留设备原始名称用于 SDK 匹配。连接成功后读取 `ConnectionInfo.printProfile` 与 configurationSource；
+未知 Profile 时允许通信和 Raw，结构化打印须先通过 `configureProfile` 补充配置。
+仅连接后空闲时可配置 Profile，成功后须按实际介质重新初始化；失败时保留旧配置。
+连接与配置都不自动设置纸型，示例通过 `initializeMedia` 调用 `setMedia`。
+
+普通打印调用 `print(PrintOptions)`；宽高可用 `labelMm` 或 `labelDots`，不再逐次传 Profile、
+DPI 或最大打印宽度。示例 `printLabelMm` 使用 GAP 介质要求和下一标签定位，调用前等待介质初始化成功。
+每请求独立 Callback 汇入 owner，Activity 只观察 owner 状态；连接结果与意外断连分别走
+`Ui.connection` 和 `Ui.disconnected`，打印终态走 `Ui.completed`，无需 SDK 任务句柄或订阅。
 
 ```java
 import android.content.Context;
@@ -29,34 +36,66 @@ import com.netumscan.printersdk.*;
 /** App-only notification target. All actual control stays on the Manager. */
 public final class LabelSession implements AutoCloseable {
     public interface Ui {
-        void connection(ManagerResult<Void> result);
+        void connection(ManagerResult<ConnectionInfo> result);
+        void configuration(ManagerResult<ConnectionInfo> result);
+        void media(ManagerResult<Void> result);
         void disconnected(ManagerResult<Void> result);
         void completed(ManagerResult<Void> result);
     }
     private final PrinterManager manager;
-    private final CpclProfile profile;
     private volatile Ui ui;
     private RequestId active;
-    public LabelSession(Context context, String address, BleOptions ble, CpclProfile profile, int timeoutMs, Ui ui) {
-        manager = new PrinterManager(context); this.profile = profile; this.ui = ui;
-        manager.connect(ble == null ? ConnectionOptions.spp(address) : ConnectionOptions.ble(address, ble), timeoutMs,
+    /** Pass spp(device) or ble(device) to use SDK name matching. */
+    public LabelSession(Context context, ConnectionOptions connection, int timeoutMs, Ui ui) {
+        manager = new PrinterManager(context); this.ui = ui;
+        manager.connect(connection, timeoutMs,
             result -> { Ui target = this.ui; if (target != null) target.connection(result); },
             result -> { Ui target = this.ui; if (target != null) target.disconnected(result); });
     }
-    /** The preparation callback runs in the SDK background coordinator. */
-    public void print(PrinterManager.Preparation preparation, int timeoutMs) {
-        active = manager.print(profile, new PrintOptions(timeoutMs), preparation, result -> {
+    /** Only after connection, while idle. Success invalidates previous media evidence. */
+    public void configureProfile(PrinterProfile profile) {
+        manager.configurePrintProfile(profile, result -> {
+            Ui target = ui; if (target != null) target.configuration(result);
+        });
+    }
+    /** The app chooses physical media; configuring a Profile performs no printer IO. */
+    public void initializeMedia(MediaSettings settings, int timeoutMs) {
+        manager.setMedia(settings, timeoutMs, result -> {
+            Ui target = ui; if (target != null) target.media(result);
+        });
+    }
+    /** ImageSource.deferred loaders run in the SDK background coordinator. */
+    public void print(PrintOptions options) {
+        active = manager.print(options, result -> {
             Ui target = ui; if (target != null) target.completed(result);
         });
+    }
+    /** GAP label: the adopted Profile supplies physical density and label placement. */
+    public void printLabelMm(ImageSource source, double widthMm, double heightMm, int calibrationDots) {
+        print(PrintOptions.labelMm(widthMm, heightMm)
+            .horizontalCalibrationDots(calibrationDots)
+            .addImage(source, 0, 0, ImageRender.threshold(128).containBoxMm(widthMm, heightMm))
+            .nextLabel(true)
+            .mediaRequirement(new MediaRequirement(MediaSettings.tracking(MediaMode.GAP),
+                MediaRequirement.ALLOW_LAST_SENT))
+            .build());
     }
     public void cancel() { manager.cancel(active); }
     @Override public void close() { ui = null; manager.close(result -> { }); }
 }
 ```
 
-像素应为 GRAY8 原始数组，长度等于 width*height；PNG/JPEG 先在 preparation 解码。
-从交给请求到终态期间保持数组只读。`cancel()` 取消最近一次请求；需要管理多个请求时，
-应用所有者自行保存 RequestId 集合。页面结束调用 close，它解除 UI 目标并异步关闭独占 Manager。
+图像使用 `ImageSource.pixels(PixelImage.copyOf(...))`、`AndroidImages.fromResource`、
+`AndroidImages.takeFile` 或 `ImageSource.deferred`。PNG/JPEG 与 EXIF 处理由内置适配器在 SDK 后台执行；
+自定义 loader 检查 `ImageLoadContext` 取消与资源预算。文件方式只接管专用、稳定的 App 缓存副本，
+URI 权限与复制由 App 负责，接管后不再修改或删除该文件。
+`PrintOptions` 不拥有来源的关闭责任；owner 在不再需要新提交时关闭自己的 ImageSource，
+已接收请求和实际读取退出后才会释放其引用。一个请求复用同一来源只加载一次，动态 loader 可在不同提交返回不同内容。
+
+此精简示例的 `cancel()` 只取消最近一次打印；多请求 owner 保存 RequestId 集合并按终态移除。
+从选图开始到导入、提交及设备请求结束，App 应禁止换机和修改 Profile；取消、断开和关闭仍可使用。
+正常换机须等待 `disconnect` 清理完成后再连接。独占 owner 结束调用 close；共享 owner 的页面只解绑观察，
+Activity 重建不重放连接、初始化或打印。后台策略由 App 明确实施，回前台不自动重连或补印。
 
 ## iOS 会话
 

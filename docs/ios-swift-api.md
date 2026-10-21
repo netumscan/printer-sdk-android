@@ -1,13 +1,13 @@
 # iOS Swift API 参考
 
-发布候选版本 **0.3.0-preview.5**；原生 SDK **0.3.0**；C ABI **3/r2**。
+发布候选版本 **0.3.0-preview.8**；原生 SDK **0.3.0**；C ABI **3/r2**。
 
-本页逐项覆盖审定的编译器公共 API 基线，共 **275** 个文档条目。
+本页逐项覆盖审定的编译器公共 API 基线，共 **279** 个文档条目。
 声明、JVM descriptor、常量、枚举和编译器关系均来自基线，说明按稳定文档 ID 维护。
 机器可读的完整基线与说明见 [api-reference.json](api-reference.json)；运行
 `python3 tools/check-api-reference.py` 可检查覆盖范围、审定 SHA-256 和本页字节一致性。
 
-基线 SHA-256：`affaba2490e4db54029a34867b9774917b0cb07e928276742609533e9ccd9169`
+基线 SHA-256：`8e3d0c3c52682ea9285c363cd9fa7dc574f4321fe17ef8460b523dc7f1778d97`
 
 运行约束与错误处理见 [API 与生命周期](api-lifecycle.md) 和 [错误码与排障](errors-troubleshooting.md)。
 本页是未发布的发布候选契约，不代表发布制品或公开历史证明。硬件验收仍暂缓，`hardware_verified=false`。
@@ -24,8 +24,8 @@
 - [FeatureSupport](#api-63244971bb8665f0438c)
 - [FinishScope](#api-8da32930540a97e6bfd9)
 - [ImageAlgorithm](#api-41361c67b37b815a38ae)
+- [LTM90Profile](#api-ce0b9d16f565d72286d1)
 - [LabelJobOptions](#api-9cd007436b5a242686f9)
-- [M90Profile](#api-c09da0bc38ed43e7aef2)
 - [ManagerOutcome](#api-625d7c79302095211bcb)
 - [ManagerResult](#api-d5c711f55a02b7703b81)
 - [MediaMode](#api-e9f6609ce460a51cc89f)
@@ -43,6 +43,7 @@
 - [PrinterFeature](#api-67c88d53ad46bc6679a5)
 - [PrinterGeometry](#api-b511b313f54808d516b6)
 - [PrinterManager](#api-1d5ad0ccf40ef0036743)
+- [PrinterProfiles](#api-51e476f28a1717d3fa11)
 - [PrinterProtocol](#api-7c7a9dd0ee08114f96bd)
 - [PrinterSDKError](#api-7eade5ddc7d13cb74d9a)
 - [ReceiptFinishOptions](#api-7a656acf1cbdc7b0f7ad)
@@ -1610,6 +1611,73 @@ case threshold
 
 符号种类：`swift.enum.case`；访问级别：`public`。
 
+<a id="api-ce0b9d16f565d72286d1"></a>
+
+## LTM90Profile
+
+<a id="api-6d29d4e94629959de3ff"></a>
+
+### LTM90Profile
+
+提供 LT-M90 的 BLE 与 CPCL 配置工厂。
+
+```swift
+enum LTM90Profile
+```
+
+静态工厂命名空间，不提供可创建的实例。BLE 采用固件 V1.2 文档中的 FF00／FF02 和 FF01／FF03 无响应写入及 Credit；CPCL 固定已确认的 203 DPI、864 dots 和水平原点 0。最大标签页高与 FORM 由调用方显式提供，介质和业务布局继续逐操作传入。工厂本身不进行型号识别、连接或 IO，也不代表硬件验收通过。
+
+文档 ID：`apple:symbol:s:10PrinterSDK12LTM90ProfileO`
+
+符号种类：`swift.enum`；访问级别：`public`。
+
+<a id="api-b17d18f5246b6077cc29"></a>
+
+### LTM90Profile.bleOptions(maxWriteBytes:)
+
+生成 LT-M90 文档 V1.2 的无响应写入和 Credit 配置。
+
+```swift
+static func bleOptions(maxWriteBytes: Int = 512) throws -> BLEOptions
+```
+
+`maxWriteBytes` 默认 `512`，单位字节，接受 1…512，否则抛 1001。返回服务 FF00、写入 FF02、Data Out FF01、Data FC FF03 对应的标准 Bluetooth Base UUID，并启用无响应写入及 Credit；完整 UUID 形式为 `0000xxxx-0000-1000-8000-00805F9B34FB`。实际发送包长仍由系统写入容量、固件公告与应用上限共同限制。工厂不进行扫描、连接或 IO，不预置固定初始 Credit，不确认机械打印能力。
+
+文档 ID：`apple:symbol:s:10PrinterSDK12LTM90ProfileO10bleOptions13maxWriteBytesAA10BLEOptionsVSi_tKFZ`
+
+符号种类：`swift.type.method`；访问级别：`public`。
+
+声明引用的编译器标识：
+
+| 名称 | precise identifier |
+| --- | --- |
+| BLEOptions | `s:10PrinterSDK10BLEOptionsV` |
+| Int | `s:Si` |
+
+<a id="api-206ab3f09aca9953ee80"></a>
+
+### LTM90Profile.cpclProfile(maxLabelHeightDots:form:)
+
+创建 LT-M90 的 CPCL 打印预设。
+
+```swift
+static func cpclProfile(maxLabelHeightDots: UInt32, form: Bool) throws -> CpclProfile
+```
+
+固定 DPI 203、设备最大打印宽度 864 dots、水平原点 0；`maxLabelHeightDots` 与 `form` 均由调用方显式传入。页高接受 1…65535 点，否则抛 `PrinterSDKError` code 1001；不把未知安全最大页高或 FORM 写成型号默认值。同步返回新值，不执行 IO、介质设置、自动居中或布局。实际图像宽度及纸面适配由应用确定。
+
+文档 ID：`apple:symbol:s:10PrinterSDK12LTM90ProfileO04cpclD018maxLabelHeightDots4formAA04CpclD0Vs6UInt32V_SbtKFZ`
+
+符号种类：`swift.type.method`；访问级别：`public`。
+
+声明引用的编译器标识：
+
+| 名称 | precise identifier |
+| --- | --- |
+| Bool | `s:Sb` |
+| CpclProfile | `s:10PrinterSDK11CpclProfileV` |
+| UInt32 | `s:s6UInt32V` |
+
 <a id="api-9cd007436b5a242686f9"></a>
 
 ## LabelJobOptions
@@ -1807,49 +1875,6 @@ let widthDots: UInt32
 | 名称 | precise identifier |
 | --- | --- |
 | UInt32 | `s:s6UInt32V` |
-
-<a id="api-c09da0bc38ed43e7aef2"></a>
-
-## M90Profile
-
-<a id="api-36e6668b567033ab4cff"></a>
-
-### M90Profile
-
-提供依据 M90 固件 V1.2 文档的 BLE 配置工厂。
-
-```swift
-enum M90Profile
-```
-
-该枚举用作静态命名空间，没有可供创建实例的公开枚举项。当前只提供 BLE 服务/写入/Credit 特征预设，DPI、点宽、标签高度及 FORM 仍由应用明确提供。选择此预设不表示 M90 或任意硬件已通过本 SDK 验收。
-
-文档 ID：`apple:symbol:s:10PrinterSDK10M90ProfileO`
-
-符号种类：`swift.enum`；访问级别：`public`。
-
-<a id="api-5f602b8f4d618a37f4f0"></a>
-
-### M90Profile.bleOptions(maxWriteBytes:)
-
-生成 M90 文档 V1.2 的无响应写入和 Credit 配置。
-
-```swift
-static func bleOptions(maxWriteBytes: Int = 512) throws -> BLEOptions
-```
-
-`maxWriteBytes` 默认 `512`，单位字节，接受 1…512，否则抛 1001。返回服务 FF00、写入 FF02、Data Out FF01、Data FC FF03 对应的标准 Bluetooth Base UUID，并启用无响应写入及 Credit；完整 UUID 形式为 `0000xxxx-0000-1000-8000-00805F9B34FB`。实际发送包长仍由系统写入容量、固件公告与应用上限共同限制。工厂不进行扫描、连接或 IO，不预置固定初始 Credit，不确认机械打印能力。
-
-文档 ID：`apple:symbol:s:10PrinterSDK10M90ProfileO10bleOptions13maxWriteBytesAA10BLEOptionsVSi_tKFZ`
-
-符号种类：`swift.type.method`；访问级别：`public`。
-
-声明引用的编译器标识：
-
-| 名称 | precise identifier |
-| --- | --- |
-| BLEOptions | `s:10PrinterSDK10BLEOptionsV` |
-| Int | `s:Si` |
 
 <a id="api-625d7c79302095211bcb"></a>
 
@@ -4879,6 +4904,74 @@ profile选择本次编码协议；preparation在后台产生PreparedPrint，opti
 | UInt32 | `s:s6UInt32V` |
 | Void | `s:s4Voida` |
 
+<a id="api-51e476f28a1717d3fa11"></a>
+
+## PrinterProfiles
+
+<a id="api-0e16330bd7f0b99baf50"></a>
+
+### PrinterProfiles
+
+按蓝牙名称提供 BLE／CPCL 推荐配置，显式配置优先。
+
+```swift
+enum PrinterProfiles
+```
+
+仅完整 ASCII 名称 `LT-M90_[0-9A-Fa-f]{4}` 匹配，型号前缀区分大小写；不修剪输入，空值、空白、换行、未知型号或格式不符均无推荐。名称只作为配置线索，不核对蓝牙地址或认证硬件。 两个静态方法独立解析配置，同步执行且不进行扫描、连接、打印机 IO 或 Manager 状态保存；不创建型号聚合对象，不推断 ESC/POS、介质、FORM 或业务布局。
+
+文档 ID：`apple:symbol:s:10PrinterSDK0A8ProfilesO`
+
+符号种类：`swift.enum`；访问级别：`public`。
+
+<a id="api-5f0c01cbf829ce508264"></a>
+
+### PrinterProfiles.resolveBleOptions(bluetoothName:explicitOptions:)
+
+解析名称对应的 BLE 推荐配置，优先采用显式配置。
+
+```swift
+static func resolveBleOptions(bluetoothName: String?, explicitOptions: BLEOptions? = nil) throws -> BLEOptions?
+```
+
+`explicitOptions` 默认为 nil；非 nil 时直接返回，不检查名称。否则，仅完整 ASCII 名称 `LT-M90_[0-9A-Fa-f]{4}` 匹配，型号前缀区分大小写；不修剪输入，空值、空白、换行、未知型号或格式不符均无推荐。名称只作为配置线索，不核对蓝牙地址或认证硬件。 未命中返回 nil；命中调用 `LTM90Profile.bleOptions()`，写入上限 512 字节，采用现有 FF00／FF02、FF01／FF03 无响应写入及 Credit 配置。实际包长仍受平台和固件约束。方法同步执行，不扫描、连接或进行 IO；保留 throws 以传递配置构造错误。
+
+文档 ID：`apple:symbol:s:10PrinterSDK0A8ProfilesO17resolveBleOptions13bluetoothName08explicitF0AA10BLEOptionsVSgSSSg_AItKFZ`
+
+符号种类：`swift.type.method`；访问级别：`public`。
+
+声明引用的编译器标识：
+
+| 名称 | precise identifier |
+| --- | --- |
+| BLEOptions | `s:10PrinterSDK10BLEOptionsV` |
+| String | `s:SS` |
+
+<a id="api-6297d1bf8061ffd9d67e"></a>
+
+### PrinterProfiles.resolveCpclProfile(bluetoothName:explicitProfile:maxLabelHeightDots:form:)
+
+解析名称对应的 CPCL 推荐配置，优先采用显式配置。
+
+```swift
+static func resolveCpclProfile(bluetoothName: String?, explicitProfile: CpclProfile? = nil, maxLabelHeightDots: UInt32, form: Bool) throws -> CpclProfile?
+```
+
+`explicitProfile` 默认为 nil；非 nil 时直接返回，不检查名称或未使用的 `maxLabelHeightDots`／`form`。否则，仅完整 ASCII 名称 `LT-M90_[0-9A-Fa-f]{4}` 匹配，型号前缀区分大小写；不修剪输入，空值、空白、换行、未知型号或格式不符均无推荐。名称只作为配置线索，不核对蓝牙地址或认证硬件。 未命中返回 nil，不校验兜底页高；命中调用 `LTM90Profile.cpclProfile(maxLabelHeightDots:form:)`。页高须为 1…65535 点，非法值抛 `PrinterSDKError` code 1001。不保存连接配置或修改介质／布局。
+
+文档 ID：`apple:symbol:s:10PrinterSDK0A8ProfilesO18resolveCpclProfile13bluetoothName08explicitF018maxLabelHeightDots4formAA0eF0VSgSSSg_AKs6UInt32VSbtKFZ`
+
+符号种类：`swift.type.method`；访问级别：`public`。
+
+声明引用的编译器标识：
+
+| 名称 | precise identifier |
+| --- | --- |
+| Bool | `s:Sb` |
+| CpclProfile | `s:10PrinterSDK11CpclProfileV` |
+| String | `s:SS` |
+| UInt32 | `s:s6UInt32V` |
+
 <a id="api-7c7a9dd0ee08114f96bd"></a>
 
 ## PrinterProtocol
@@ -6461,7 +6554,7 @@ let sampledMonotonicMilliseconds: UInt64
 
 ## 编译器公共关系
 
-完整保留 **359** 条继承、协议遵循、成员及合成关系；
+完整保留 **362** 条继承、协议遵循、成员及合成关系；
 source 和 target 使用精确编译器标识，外部 Swift/Foundation 类型也保持原值。
 
 | kind | source | target | 其他编译器字段 |
@@ -6635,6 +6728,8 @@ source 和 target 使用精确编译器标识，外部 Swift/Foundation 类型�
 | `memberOf` | `s:10PrinterSDK0A8GeometryV4dpiXs6UInt32VSgvp` | `s:10PrinterSDK0A8GeometryV` | `{}` |
 | `memberOf` | `s:10PrinterSDK0A8GeometryV4dpiYs6UInt32VSgvp` | `s:10PrinterSDK0A8GeometryV` | `{}` |
 | `memberOf` | `s:10PrinterSDK0A8GeometryV8evidences6UInt32Vvp` | `s:10PrinterSDK0A8GeometryV` | `{}` |
+| `memberOf` | `s:10PrinterSDK0A8ProfilesO17resolveBleOptions13bluetoothName08explicitF0AA10BLEOptionsVSgSSSg_AItKFZ` | `s:10PrinterSDK0A8ProfilesO` | `{}` |
+| `memberOf` | `s:10PrinterSDK0A8ProfilesO18resolveCpclProfile13bluetoothName08explicitF018maxLabelHeightDots4formAA0eF0VSgSSSg_AKs6UInt32VSbtKFZ` | `s:10PrinterSDK0A8ProfilesO` | `{}` |
 | `memberOf` | `s:10PrinterSDK0A8ProtocolO4cpclyA2CmF` | `s:10PrinterSDK0A8ProtocolO` | `{}` |
 | `memberOf` | `s:10PrinterSDK0A8ProtocolO6escposyA2CmF` | `s:10PrinterSDK0A8ProtocolO` | `{}` |
 | `memberOf` | `s:10PrinterSDK0A8ProtocolO8rawValueACSgs6UInt32V_tcfc` | `s:10PrinterSDK0A8ProtocolO` | `{"sourceOrigin":{"displayName":"RawRepresentable.init(rawValue:)","identifier":"s:SY8rawValuexSg03RawB0Qz_tcfc"}}` |
@@ -6648,7 +6743,6 @@ source 和 target 使用精确编译器标识，外部 Swift/Foundation 类型�
 | `memberOf` | `s:10PrinterSDK10BLEOptionsV19writeCharacteristic10Foundation4UUIDVvp` | `s:10PrinterSDK10BLEOptionsV` | `{}` |
 | `memberOf` | `s:10PrinterSDK10BLEOptionsV7service10Foundation4UUIDVvp` | `s:10PrinterSDK10BLEOptionsV` | `{}` |
 | `memberOf` | `s:10PrinterSDK10BLEOptionsV7service19writeCharacteristic12withResponse13maxWriteBytes17creditFlowControlAC10Foundation4UUIDV_AKSbSiAA09BLECreditmN0VSgtKcfc` | `s:10PrinterSDK10BLEOptionsV` | `{}` |
-| `memberOf` | `s:10PrinterSDK10M90ProfileO10bleOptions13maxWriteBytesAA10BLEOptionsVSi_tKFZ` | `s:10PrinterSDK10M90ProfileO` | `{}` |
 | `memberOf` | `s:10PrinterSDK11CpclProfileV11xOffsetDotss6UInt32Vvp` | `s:10PrinterSDK11CpclProfileV` | `{}` |
 | `memberOf` | `s:10PrinterSDK11CpclProfileV18maxLabelHeightDotss6UInt32Vvp` | `s:10PrinterSDK11CpclProfileV` | `{}` |
 | `memberOf` | `s:10PrinterSDK11CpclProfileV3dpi9widthDots014maxLabelHeightG04form07xOffsetG0ACs6UInt32V_A2JSbAJtKcfc` | `s:10PrinterSDK11CpclProfileV` | `{}` |
@@ -6662,6 +6756,8 @@ source 和 target 使用精确编译器标识，外部 Swift/Foundation 类型�
 | `memberOf` | `s:10PrinterSDK11PixelFormatO5rgb24yA2CmF` | `s:10PrinterSDK11PixelFormatO` | `{}` |
 | `memberOf` | `s:10PrinterSDK11PixelFormatO6rgba32yA2CmF` | `s:10PrinterSDK11PixelFormatO` | `{}` |
 | `memberOf` | `s:10PrinterSDK11PixelFormatO8rawValueACSgs6UInt32V_tcfc` | `s:10PrinterSDK11PixelFormatO` | `{"sourceOrigin":{"displayName":"RawRepresentable.init(rawValue:)","identifier":"s:SY8rawValuexSg03RawB0Qz_tcfc"}}` |
+| `memberOf` | `s:10PrinterSDK12LTM90ProfileO04cpclD018maxLabelHeightDots4formAA04CpclD0Vs6UInt32V_SbtKFZ` | `s:10PrinterSDK12LTM90ProfileO` | `{}` |
+| `memberOf` | `s:10PrinterSDK12LTM90ProfileO10bleOptions13maxWriteBytesAA10BLEOptionsVSi_tKFZ` | `s:10PrinterSDK12LTM90ProfileO` | `{}` |
 | `memberOf` | `s:10PrinterSDK12PrintElementO5blankyACs6UInt32V_tcACmF` | `s:10PrinterSDK12PrintElementO` | `{}` |
 | `memberOf` | `s:10PrinterSDK12PrintElementO5imageyAcA6PixelsC_s5Int32VAHtcACmF` | `s:10PrinterSDK12PrintElementO` | `{}` |
 | `memberOf` | `s:10PrinterSDK12PrintOptionsV19timeoutMillisecondsACs6UInt32V_tcfc` | `s:10PrinterSDK12PrintOptionsV` | `{}` |
