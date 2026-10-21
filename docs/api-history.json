@@ -2339,7 +2339,7 @@
           }
         },
         "schema": 1,
-        "snapshot": "docs/api/candidates/0.3.0-preview.8/printer_sdk.h"
+        "snapshot": "docs/api/candidates/0.3.0-preview.10/printer_sdk.h"
       }
     },
     "manifest": {
@@ -2348,8 +2348,8 @@
         "version": 3
       },
       "c_abi": {
-        "baseline": "docs/api/candidates/0.3.0-preview.8/BASELINE.json",
-        "baseline_sha256": "e3b7584932e6e7c7e758393255ed31d51990647aac1addfdb8150529e22d7603"
+        "baseline": "docs/api/candidates/0.3.0-preview.10/BASELINE.json",
+        "baseline_sha256": "e7203fe7d4e15df15567f439efe53e2ef2d457b18a12eab8e5a6413366a32816"
       },
       "contract_status": "candidate",
       "historical_baseline_version": "0.2.0-preview.3",
@@ -2380,21 +2380,21 @@
       ],
       "mobile": {
         "android": {
-          "annotations": "docs/api/candidates/0.3.0-preview.8/android.json",
-          "annotations_sha256": "439542ed752af4916008ea3a4e2f263e122f1060d5c8048463d54290175a019d",
-          "baseline": "docs/api/candidates/0.3.0-preview.8/android-java.txt",
-          "baseline_sha256": "4dcc42d4069e03b42c9922027e4d44811d07cf9362d1dc7a62c17ecc09350ded"
+          "annotations": "docs/api/candidates/0.3.0-preview.10/android.json",
+          "annotations_sha256": "676a3763c5ce5349e8e55fbd18341b2a96017430cc6f1c2fc40eb44dbb39f023",
+          "baseline": "docs/api/candidates/0.3.0-preview.10/android-java.txt",
+          "baseline_sha256": "b42d80dff97b0dd790219ae23107f9946bca030b301aef865ef93694c093e980"
         },
         "apple": {
-          "annotations": "docs/api/candidates/0.3.0-preview.8/apple.json",
-          "annotations_sha256": "2735b42e9b40f46d821e7d95a33dbd3c68c874e0c503604bbc07208bf5b24776",
-          "baseline": "docs/api/candidates/0.3.0-preview.8/apple-swift.txt",
-          "baseline_sha256": "8e3d0c3c52682ea9285c363cd9fa7dc574f4321fe17ef8460b523dc7f1778d97"
+          "annotations": "docs/api/candidates/0.3.0-preview.10/apple.json",
+          "annotations_sha256": "3721dc3381043f5bb8df4e7d735b3d37f4171ac8ef333fa9a69385e0ebfdb5fd",
+          "baseline": "docs/api/candidates/0.3.0-preview.10/apple-swift.txt",
+          "baseline_sha256": "8aaed8263549d0d9ea0abc7c14918fdf38492531e97e975143c2d1c583533377"
         }
       },
       "native_sdk_version": "0.3.0",
       "schema": 3,
-      "sdk_version": "0.3.0-preview.8"
+      "sdk_version": "0.3.0-preview.10"
     }
   },
   "contract_status": "candidate",
@@ -2509,5 +2509,5 @@
     }
   ],
   "schema": 2,
-  "sdk_version": "0.3.0-preview.8"
+  "sdk_version": "0.3.0-preview.10"
 }

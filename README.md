@@ -1,51 +1,58 @@
 # NETUM Printer SDK for Android
 
-`0.3.0-preview.8` 为开发预览，核心 SDK 0.3.0，C ABI 3/r2。
-当前移动 API 通过独立 `PrinterManager` 管理一个连接，输入与结果都是数据对象。
-开发身份不作为在线发布证明；集成时核对精确版本、制品摘要与运行库身份。
+开发预览 **`0.3.0-preview.10`**，原生 SDK **`0.3.0`**、C ABI **`3/r2`**。
+Android API 21+、Java 8；AAR 包含 `arm64-v8a`、`armeabi-v7a`、`x86_64`。
+接入时核对精确分发版本、制品 SHA-256 和运行库身份；候选契约本身不证明已经线上发布。
 
-[客户指南](docs/README.md) 覆盖权限、请求生命周期、配置、错误码、兼容诊断和迁移。
-Manager 移动 API 与旧移动 API 不兼容，需重新编译；C ABI3/r2 仍保留原 native 契约。
+[客户指南](docs/README.md) 包含权限、连接、图片、回调、错误码和完整公开 API。
+本版移动 API 为需要迁移和重新编译的新契约；原生 C ABI 保持 27 个 C／23 个 JNI 导出。
+SDK 实现源码不随 Android 分发提供，许可及第三方声明见 [LICENSE](LICENSE) 和 [LICENSE-NOTICE.md](LICENSE-NOTICE.md)。
 
-当前未发布开发版使用本地 SDK 工程或本地 AAR。对应版本实际发布后，可使用精确坐标：
+## 依赖
+
+实际发布后使用精确 Maven 坐标；发布前使用已核验的本地 AAR：
 
 ```kotlin
 dependencyResolutionManagement {
     repositories { google(); mavenCentral() }
 }
 dependencies {
-    implementation("com.netumscan:printer-sdk-android:0.3.0-preview.8")
+    implementation("com.netumscan:printer-sdk-android:0.3.0-preview.10")
 }
 ```
 
-要求 Android 5.0 / API 21+、Java 8，支持 `arm64-v8a`、`armeabi-v7a`、`x86_64`。
-AAR 提供 27 个 C 导出、23 个 JNI 导出及 consumer R8 规则，静态链接私有 C++ 运行库。
-应用保留其他依赖所需的共享运行库，不能混用旧 native 库。
+SDK 静态链接私有 C++ 运行库并提供 consumer R8 规则。App 保留其他依赖需要的运行库，整套包装与 native 库应使用相同分发版本。
 
-应用创建独立 `PrinterManager(context)`，通过 connect、print、sendRaw、setMedia、queryStatus、
-disconnect 和 close 发起请求。请求立即返回 RequestId，完成回调异步派发到主线程；
-参数、状态、准备、准入与执行失败统一从 `ManagerResult` 返回。
+## 连接与图片
 
-连接使用 `ConnectionOptions.spp(device)` 或 `ble(device)` 保留扫描得到的原始名称，
-SDK 为已知名称匹配 Profile；以成功回调的 `ConnectionInfo.printProfile` 为准。
-未知或需更正的配置，在连接后空闲时调用 `configurePrintProfile`，不提供连接前 Profile 或单次打印覆盖。
-配置成功不发送介质命令；App 选择实际纸型后，显式调用 `setMedia` 初始化。
+每个 `PrinterManager(context)` 同时管理一个设备。`scanBle` 返回发现设备，`bondedDevices` 返回系统已配对列表；权限、配对和用户选择由 App 处理。经典蓝牙使用 `connectSpp`，BLE 使用 `connectBle`。
 
-打印调用 `manager.print(PrintOptions, Callback)`。`PrintOptions` 描述标签／小票宽高、图像、
-空白、份数、超时与校准；`ImageSource` 提供像素、资源、稳定缓存文件或后台 loader，
-逐图 `ImageRender` 指定缩放、阈值／抖动和反色。已知 Profile 的 DPI 与最大打印宽度无需重复传入。
-LT-M90 使用精确 8 dots/mm，50 × 50 mm 对应 400 × 400 dots；SDK 按硬件居中规则计算起点，
-App 仅传标签尺寸与可选校准。详情见[连接与打印配置](docs/configuration.md)。
+设备原名可推荐内置 `PrinterModel`；改名的已收录设备可以显式选择型号，未知型号不得按 M90 猜测。通信参数由 SDK 内部管理。以下代码适用于调用方已确认属于 LT-M90 的设备：
 
-每请求独立 Callback，由 owner 集中更新状态，Activity 观察 owner；连接结果与意外断连单独处理。
-取消使用 `manager.cancel(requestId)`，断开和关闭通过各自 Callback 等待清理屏障，
-不要同步等待主线程回调。选图／导入期间由 App 禁止换机与修改 Profile；SDK 从请求接纳起保护排队与执行工作。
-应用不维护 SDK 轮询器、IO 队列、订阅或 native 任务句柄。
+```java
+PrinterManager manager = new PrinterManager(context);
+manager.connectBle(device, PrinterModel.LT_M90, connection -> {
+    if (connection.outcome != ManagerResult.Outcome.SUCCESS) return;
+    manager.printEncodedImage(pngJpeg, 50.0, 50.0, result -> {
+        // Check result.code, completion and outputMayHaveOccurred.
+    });
+}, disconnected -> {
+    // Update the App state; reconnect only after an explicit user action.
+});
+```
 
-SPP 使用经典蓝牙 RFCOMM。已知名称可匹配 BLE 参数，未知名称需显式提供服务、特征和流控配置。
-名称匹配不是硬件身份认证。权限、用户选设备和前后台策略由应用负责，见[接入与权限](docs/integration.md)。
-未验证硬件状态显示未知，查询不发送猜测指令；DATA_SENT 不证明实际打印完成。
-SDK 不自动重连、续打、重试或重放。
+`printEncodedImage` 接收完整 PNG/JPEG `byte[]`；已有 `Bitmap` 可直接使用 `printImage(bitmap, widthMm, heightMm, callback)`，无需压缩后再解码。宽高为页面毫米，SDK 按型号精确点密度换算，不使用图片 DPI 或屏幕 density 决定纸面尺寸。
 
-本目录和 Maven classifier JAR 仅含分发文档与许可信息，不含 SDK 实现源码。
-许可范围见 [LICENSE](LICENSE)，`hardware_verified=false`。
+两入口返回前取得独立快照；复制期间不得并发修改输入，返回后调用方可管理原图。SDK 后台解码、修正方向、合成白底并等比缩小后居中补白，不放大、不裁剪；固定一份、阈值 128、不反色，不隐式 FORM、切纸或下一标签定位。文本、条码等由 App 先绘成图片。
+
+`setPaperType` 以独立设备请求采用 `GAP_LABEL`／`BLACK_MARK`／`CONTINUOUS`，不隐式校准或持久化；`locateNextLabel` 单独定位。连接后空闲时可 `setPrinterModel`，结果以成功回调返回的 `ConnectionInfo` 为准。型号选择只是本地配置，不是硬件认证。
+
+## 请求与生命周期
+
+请求立即返回 `RequestId`，唯一终态通过主线程异步 `Callback.onComplete` 交付。App 持有 Manager 和请求身份；取消调用 `manager.cancel(requestId)`。`disconnect` 完成后可显式重连，所有者结束时异步 `close`，关闭后不能复用；不要同步等待主线程回调。
+
+所有打印、Raw、纸型、定位和查询共享同一设备 FIFO。SDK 不自动重连、续打或重放；失败与取消也可能已有输出。`DATA_SENT` 只表示数据传输完成，不能推断纸面完成。`capabilities` 保留三态支持程度，状态结果的缺纸／开盖／纸将尽／切刀错误保持可空值；未知不代表正常。
+
+Flutter 通过标准 codec 将完整 PNG/JPEG `Uint8List` 映射为 Android `byte[]`，插件直接调用编码入口；不需要 Base64 或裸 RGBA。文件选择、缓存、页面绑定和后台策略仍由 App／插件管理。
+
+软件分发与消费者检查不等于真实无线、纸面或峰值内存验收，`hardware_verified=false`。SDK 不公开底层作业、图片准备对象、平台句柄或队列控制接口。

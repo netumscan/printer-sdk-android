@@ -17,7 +17,13 @@ APPROVED_BASELINES = {
     "android": "8ad69087e4a965f7df4aa56f84b33dc6cfcf340ed3e8395f57155dfe449390a2",
     "apple": "62ccd5c542c02285429d8942b7eb69a68555180ddb3b9d335780e30009f2fd65",
 }
-DEVELOPMENT_BASELINES = {"0.3.0-preview.8-dev": {
+DEVELOPMENT_BASELINES = {"0.3.0-preview.10-dev": {
+    "android": "b42d80dff97b0dd790219ae23107f9946bca030b301aef865ef93694c093e980",
+    "apple": "8aaed8263549d0d9ea0abc7c14918fdf38492531e97e975143c2d1c583533377",
+}, "0.3.0-preview.9-dev": {
+    "android": "4dcc42d4069e03b42c9922027e4d44811d07cf9362d1dc7a62c17ecc09350ded",
+    "apple": "94621ef91e247a4176bab1f21cad43053d71aa18accf9503ff7e35e7685a924b",
+}, "0.3.0-preview.8-dev": {
     "android": "4dcc42d4069e03b42c9922027e4d44811d07cf9362d1dc7a62c17ecc09350ded",
     "apple": "8e3d0c3c52682ea9285c363cd9fa7dc574f4321fe17ef8460b523dc7f1778d97",
 }, "0.3.0-preview.7-dev": {
@@ -46,6 +52,8 @@ DEVELOPMENT_BASELINES = {"0.3.0-preview.8-dev": {
     "apple": "24046a0889ac83a9d96bac1220867005edbd2ce50684f972f30c691d8429fe42",
 }}
 DEVELOPMENT_IDENTITIES = {
+    "0.3.0-preview.10-dev": {"native_sdk_version": "0.3.0", "abi": {"version": 3, "revision": 2}},
+    "0.3.0-preview.9-dev": {"native_sdk_version": "0.3.0", "abi": {"version": 3, "revision": 2}},
     "0.3.0-preview.8-dev": {"native_sdk_version": "0.3.0", "abi": {"version": 3, "revision": 2}},
     "0.3.0-preview.7-dev": {"native_sdk_version": "0.3.0", "abi": {"version": 3, "revision": 2}},
     "0.3.0-preview.6-dev": {"native_sdk_version": "0.3.0", "abi": {"version": 3, "revision": 2}},
@@ -56,7 +64,10 @@ DEVELOPMENT_IDENTITIES = {
     "0.2.0-preview.5-dev": {"native_sdk_version": "0.2.0", "abi": {"version": 2, "revision": 13}},
     "0.3.0-preview.1-dev": {"native_sdk_version": "0.3.0", "abi": {"version": 3, "revision": 1}},
 }
-CANDIDATE_BASELINES = {"0.3.0-preview.1": {
+CANDIDATE_BASELINES = {"0.3.0-preview.10": {
+    "android": "b42d80dff97b0dd790219ae23107f9946bca030b301aef865ef93694c093e980",
+    "apple": "8aaed8263549d0d9ea0abc7c14918fdf38492531e97e975143c2d1c583533377",
+}, "0.3.0-preview.1": {
     "android": "07ff86b2327a0fc2ba155928f4847d8047eb1b61826bcdb6b7e223e563442fe6",
     "apple": "f695701df639bd0fb39cb1481ab5cce2f2f4631729ea1fd8697274b7b46687ea",
 }, "0.3.0-preview.2": {
@@ -72,7 +83,9 @@ CANDIDATE_BASELINES = {"0.3.0-preview.1": {
     "android": "4dcc42d4069e03b42c9922027e4d44811d07cf9362d1dc7a62c17ecc09350ded",
     "apple": "8e3d0c3c52682ea9285c363cd9fa7dc574f4321fe17ef8460b523dc7f1778d97",
 }}
-CANDIDATE_IDENTITIES = {"0.3.0-preview.1": {
+CANDIDATE_IDENTITIES = {"0.3.0-preview.10": {
+    "native_sdk_version": "0.3.0", "abi": {"version": 3, "revision": 2},
+}, "0.3.0-preview.1": {
     "native_sdk_version": "0.3.0", "abi": {"version": 3, "revision": 1},
 }, "0.3.0-preview.2": {
     "native_sdk_version": "0.3.0", "abi": {"version": 3, "revision": 1},
@@ -83,7 +96,10 @@ CANDIDATE_IDENTITIES = {"0.3.0-preview.1": {
 }, "0.3.0-preview.8": {
     "native_sdk_version": "0.3.0", "abi": {"version": 3, "revision": 2},
 }}
-CANDIDATE_ANNOTATIONS = {"0.3.0-preview.1": {
+CANDIDATE_ANNOTATIONS = {"0.3.0-preview.10": {
+    "android": "676a3763c5ce5349e8e55fbd18341b2a96017430cc6f1c2fc40eb44dbb39f023",
+    "apple": "3721dc3381043f5bb8df4e7d735b3d37f4171ac8ef333fa9a69385e0ebfdb5fd",
+}, "0.3.0-preview.1": {
     "android": "6dad2100c2fc107c5dc00151547eaa62a8e78fb766ba5ec05d6264c8d6ee7082",
     "apple": "491fcf6ab3288fd1ecf4f2c002608c7c7d16ebf5baf8c1903212b2766ee7e41c",
 }, "0.3.0-preview.2": {
@@ -101,6 +117,7 @@ CANDIDATE_ANNOTATIONS = {"0.3.0-preview.1": {
 }}
 DOCUMENTATION_CORRECTIONS = {
     "0.3.0-preview.4": "cf2b4e4f6a0f9c3f414ac3e1a3ba7cc1386e0596860c0a958f3e3fd7f8927a03",
+    "0.3.0-preview.8": "76c8044bec95795202609f2a1ab3fbddbdbf5855e8ad41351b89c35fd3170aba",
 }
 PUBLISHED_VERSIONS = {"0.2.0-preview." + str(n) for n in (1, 2, 3, 4)}
 DOCUMENTS = {"android": "docs/android-java-api.md", "apple": "docs/ios-swift-api.md"}
@@ -277,9 +294,11 @@ def validate_documentation_corrections(bundle):
     if sha256(raw) != expected:
         raise ValueError("API documentation corrections differ from reviewed SHA-256")
     exact_keys(corrections["platforms"], {"android", "apple"})
+    if not any(corrections["platforms"].values()):
+        raise ValueError("API documentation correction layer is empty")
     for platform, entries in corrections["platforms"].items():
         original = bundle["platforms"][platform]
-        if not isinstance(entries, dict) or not entries or not set(entries) <= set(original["annotations"]["entries"]):
+        if not isinstance(entries, dict) or not set(entries) <= set(original["annotations"]["entries"]):
             raise ValueError("API documentation correction ID differs from compiler baseline: " + platform)
         validate_annotations(platform, original["baseline_sha256"], entries, {
             "schema": 1, "platform": platform, "baseline_sha256": original["baseline_sha256"], "entries": entries})
