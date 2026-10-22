@@ -1,11 +1,11 @@
 # NETUM Printer SDK for Android
 
-开发预览 **`0.3.0-preview.10`**，原生 SDK **`0.3.0`**、C ABI **`3/r2`**。
+开发预览 **`0.3.0-preview.11`**，原生 SDK **`0.3.0`**、C ABI **`3/r2`**。
 Android API 21+、Java 8；AAR 包含 `arm64-v8a`、`armeabi-v7a`、`x86_64`。
 接入时核对精确分发版本、制品 SHA-256 和运行库身份；候选契约本身不证明已经线上发布。
 
 [客户指南](docs/README.md) 包含权限、连接、图片、回调、错误码和完整公开 API。
-本版移动 API 为需要迁移和重新编译的新契约；原生 C ABI 保持 27 个 C／23 个 JNI 导出。
+本版与 `.10` 的公共调用签名一致，更新精确依赖后重新构建；更早的旧移动 API 需要迁移。原生 C ABI 保持 27 个 C／23 个 JNI 导出。
 SDK 实现源码不随 Android 分发提供，许可及第三方声明见 [LICENSE](LICENSE) 和 [LICENSE-NOTICE.md](LICENSE-NOTICE.md)。
 
 ## 依赖
@@ -17,7 +17,7 @@ dependencyResolutionManagement {
     repositories { google(); mavenCentral() }
 }
 dependencies {
-    implementation("com.netumscan:printer-sdk-android:0.3.0-preview.10")
+    implementation("com.netumscan:printer-sdk-android:0.3.0-preview.11")
 }
 ```
 
