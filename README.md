@@ -1,11 +1,11 @@
 # NETUM Printer SDK for Android
 
-开发预览 **`0.3.0-preview.11`**，原生 SDK **`0.3.0`**、C ABI **`3/r2`**。
+开发预览 **`0.3.0-preview.16`**，原生 SDK **`0.3.0`**、C ABI **`3/r3`**。
 Android API 21+、Java 8；AAR 包含 `arm64-v8a`、`armeabi-v7a`、`x86_64`。
 接入时核对精确分发版本、制品 SHA-256 和运行库身份；候选契约本身不证明已经线上发布。
 
 [客户指南](docs/README.md) 包含权限、连接、图片、回调、错误码和完整公开 API。
-本版与 `.10` 的公共调用签名一致，更新精确依赖后重新构建；更早的旧移动 API 需要迁移。原生 C ABI 保持 27 个 C／23 个 JNI 导出。
+本版将 queryStatus 改为 getStatus，请求结果为 Void，状态统一经 setStatusListener 通知；连接时自动读取可选 ConnectionInfo.printerInfo。移动调用方需要重新编译。当前 C ABI3/r3 保持28个C／23个JNI导出。
 SDK 实现源码不随 Android 分发提供，许可及第三方声明见 [LICENSE](LICENSE) 和 [LICENSE-NOTICE.md](LICENSE-NOTICE.md)。
 
 ## 依赖
@@ -17,7 +17,7 @@ dependencyResolutionManagement {
     repositories { google(); mavenCentral() }
 }
 dependencies {
-    implementation("com.netumscan:printer-sdk-android:0.3.0-preview.11")
+    implementation("com.netumscan:printer-sdk-android:0.3.0-preview.16")
 }
 ```
 
@@ -56,3 +56,11 @@ manager.connectBle(device, PrinterModel.LT_M90, connection -> {
 Flutter 通过标准 codec 将完整 PNG/JPEG `Uint8List` 映射为 Android `byte[]`，插件直接调用编码入口；不需要 Base64 或裸 RGBA。文件选择、缓存、页面绑定和后台策略仍由 App／插件管理。
 
 软件分发与消费者检查不等于真实无线、纸面或峰值内存验收，`hardware_verified=false`。SDK 不公开底层作业、图片准备对象、平台句柄或队列控制接口。
+
+## 设备信息与实时状态
+
+每次连接自动查询一次JXIG，随ConnectionInfo.printerInfo返回可选快照，最多额外等待1秒；普通信息查询失败不影响可用连接及打印，真实通信故障按原连接处理。不提供queryPrinterInfo；uidHex不是已确认序列号，reportedVersion不是已确认固件版本，protocolVerified=false。
+
+先注册setStatusListener，再连接。LT-M90支持getStatus主动发送GS a 00；请求回调每次主线程交付一个ManagerResult<Void>，成功仅说明本次新回复已校验，value为空、completion为NONE、outputMayHaveOccurred为false。查询和主动上报统一更新监听，coverOpen／paperOut可变为已知，paperNearEnd／cutterError仍未知。监听重复状态去重，断开／换型号／关闭清空旧状态；disconnect保留监听，close释放监听。查询写出后的超时、取消或坏回复关闭链路，以隔离迟到回复；需显式重连。
+
+2026-10-23同一台LT-M90已完成Android BLE／SPP与iOS BLE正常盖纸变化、主动上报、查询和Full Demo刷新验收。此范围不覆盖其他固件、故障注入、纸面或打印拥塞，整体hardware_verified=false。
