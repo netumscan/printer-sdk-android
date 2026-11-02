@@ -2,7 +2,7 @@
   "abi_revision": 3,
   "abi_version": 3,
   "artifacts": {
-    "central-bundle.zip": "11e728f02b0a38253595a3ae7b8d78287be904883dfcbca4315114d2202de259"
+    "central-bundle.zip": "b0379261dc17cc6edfd1b089b3b348ac8ed37719b69c6d1833a450da1687cb79"
   },
   "channel": "central",
   "contract_status": "candidate",
@@ -16,10 +16,10 @@
     "local_status": "passed",
     "online_runtime_required": true,
     "policy": "sdk-software-v5",
-    "report_sha256": "1c81ae7fb872b9bf531d0894558de0162ec8fec37446b74f32588576f93977d2"
+    "report_sha256": "89059828e1bd27974e8f022ccf5b9be14214ababfe50c981716c2920f9b69740"
   },
-  "source_base_commit": "12b96993309b4254f585bcea54d9d95a41a1f26a",
-  "source_input_sha256": "12dbd2582d29b735c52bebd522f018588cc13e289fd09c44266700efee82616e",
+  "source_base_commit": "fcfb790a6554bfd8d1dac8767339bf7a32b874ef",
+  "source_input_sha256": "8312d64e8a4ffff0a2b5b0bc62d22c71269453702d3c065ca6d3c072b6ca9046",
   "source_is_worktree_snapshot": true,
-  "version": "0.3.0-preview.17"
+  "version": "0.3.0-preview.20"
 }

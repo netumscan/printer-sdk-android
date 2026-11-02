@@ -1,8 +1,8 @@
 # NETUM Printer SDK for Android
 
-开发预览 **`0.3.0-preview.17`**，native **`0.3.0`**、C ABI **`3/r3`**。
+开发预览 **`0.3.0-preview.20`**，native **`0.3.0`**、C ABI **`3/r3`**。
 支持 Android API 21+、Java 8，AAR 包含 `arm64-v8a`、`armeabi-v7a`、`x86_64`。
-本版使用统一 `PrinterListener`，删除旧逐调用 Callback 和独立状态监听入口；移动调用方必须迁移并重新编译。
+本版使用统一 `PrinterListener`，全部16个回调都是必需方法，没有默认空实现。Java／Kotlin 调用者必须显式实现每个方法，未使用的动作或观察也应在 App 中明确留空；移动调用方须迁移并重新编译。
 Android 包装和 native 库应成套使用同一分发版本。许可和第三方声明见 [LICENSE](LICENSE) 和 [LICENSE-NOTICE.md](LICENSE-NOTICE.md)。
 
 [客户指南](docs/README.md) 提供双平台接入、生命周期、迁移、错误码和完整公开 API。
@@ -17,7 +17,7 @@ dependencyResolutionManagement {
     repositories { google(); mavenCentral() }
 }
 dependencies {
-    implementation("com.netumscan:printer-sdk-android:0.3.0-preview.17")
+    implementation("com.netumscan:printer-sdk-android:0.3.0-preview.20")
 }
 ```
 
@@ -25,7 +25,7 @@ SDK 静态链接私有 C++ 运行库并提供 consumer R8 规则，不分发私�
 
 ## 统一接收者与实时扫描
 
-由稳定的 App owner 实现 `PrinterListener`，先注册，再提交请求。操作立即返回 `RequestId`，
+由稳定的 App owner 完整实现 `PrinterListener`，先注册，再提交请求。编译器拒绝空实现或遗漏任何一个方法；以下完整示例明确保留未使用动作的空方法。操作立即返回 `RequestId`，
 按动作分别交付 `ManagerResult`；结果保留原始请求 ID、outcome、code、message、completion 和 `outputMayHaveOccurred`。
 以下示例只有用户调用方法才扫描、连接或打印，候选发现不会自动连接：
 
@@ -36,6 +36,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 final class PrinterSession implements PrinterListener {
+    // Unused callbacks are explicit: this owner does not submit or observe these actions.
+    @Override public void onBondedDevicesCompleted(ManagerResult<java.util.List<DiscoveredDevice>> result) { }
+    @Override public void onModelConfigurationCompleted(ManagerResult<ConnectionInfo> result) { }
+    @Override public void onPaperTypeCompleted(ManagerResult<Void> result) { }
+    @Override public void onStatusQueryCompleted(ManagerResult<StatusResult> result) { }
+    @Override public void onLabelPositioningCompleted(ManagerResult<Void> result) { }
+    @Override public void onRawCompleted(ManagerResult<Void> result) { }
+    @Override public void onCapabilitiesCompleted(ManagerResult<PrinterCapabilities> result) { }
+    @Override public void onSdkInfoCompleted(ManagerResult<SdkInfo> result) { }
+    @Override public void onDisconnectCompleted(ManagerResult<Void> result) { }
+
     private final PrinterManager manager;
     private RequestId scan;
     private List<DiscoveredDevice> devices = new ArrayList<>();
@@ -49,7 +60,7 @@ final class PrinterSession implements PrinterListener {
         devices.clear();
         scan = manager.scanBle();
     }
-    void stopScan() { if (scan != null) manager.cancel(scan); }
+    void stopScan() { if (scan != null) manager.stopScan(scan); }
     @Override public void onDeviceDiscovered(RequestId scanId, DiscoveredDevice device) {
         if (scan != scanId) return;
         devices.add(device); // Update the visible list while scanning.
@@ -88,7 +99,7 @@ final class PrinterSession implements PrinterListener {
 
 App 保存同一个 owner、Manager 和请求 ID，所有方法及通知均按公共 API 的主线程约定使用。
 `onDeviceDiscovered` 按本轮扫描 ID 通知首次唯一设备，`onScanCompleted` 提供最终合并列表。
-App 可边扫边展示候选，停止扫描使用 `cancel(scanId)` 并等待扫描终态；选择、连接和打印由用户分别触发。
+App 可边扫边展示候选。正常停止使用 `stopScan(scanId)`，由原 `onScanCompleted` 成功返回最新合并列表（可为空），仍用原请求 ID；`cancel(scanId)` 保持取消且无列表。重复、外部、已完成或非扫描 ID 无操作。选择、连接和打印由用户分别触发。
 连接不会自动停止扫描。Android 经典蓝牙使用 `bondedDevices` 读取已配对设备，再显式 `connectSpp`；
 权限、系统配对和用户选择由 App 处理，SDK 不暴露平台句柄。
 
@@ -106,8 +117,8 @@ Manager 强持有当前 Listener；`setListener(null)` 解除，替换或解除�
 打印不会隐式设置纸型、FORM、定位或切纸；`setPaperType` 和 `locateNextLabel` 是独立请求。
 
 设备名称可推荐内置 `PrinterModel`；已确认型号的改名设备可显式指定，未知型号不猜通信参数。
-每次连接自动读取可选 `ConnectionInfo.printerInfo`；普通信息查询软失败保留可用连接，但本连接后续 wire 查询不可用。
-`getStatus()` 的 `onStatusQueryCompleted` 只报告本次请求结果，状态统一经 `onStatusChanged` 更新；
+每次连接自动读取可选 `ConnectionInfo.printerInfo`；`printerInfoReadStatus` 区分 `NOT_ATTEMPTED`／`SUCCEEDED`／`FAILED`。仅失败时 `printerInfoReadCode` 和 `printerInfoReadMessage` 有值，保留本次稳定错误和原因；未尝试与成功时为空。普通读取失败保留可用连接和打印；查询隔离策略不变，后续查询以自身结果为准，不自动重试。换型号保留诊断，重连重新读取并清空旧诊断。
+`getStatus()` 的 `onStatusQueryCompleted` 返回本次 ManagerResult<StatusResult>，成功 value 来自原生已校验响应；独立状态变化仍经 `onStatusChanged` 更新；
 四项状态均可未知，LT-M90 的开盖／缺纸可由有效查询或主动上报确认，纸将尽／切刀错误仍未知。
 查询写出后的超时、取消或坏回复保守断开以隔离迟到回复，App 显式重连，不自动重试。
 
@@ -116,3 +127,4 @@ Manager 强持有当前 Listener；`setListener(null)` 解除，替换或解除�
 失败、取消及 `DATA_SENT` 均不能证明机械打印完成。
 Flutter 使用标准 codec 将完整 `Uint8List` 转为 `byte[]`，无需 Base64 或插件重复解码。
 软件验证不等于真实无线、纸面或峰值内存验收，`hardware_verified=false`。
+
